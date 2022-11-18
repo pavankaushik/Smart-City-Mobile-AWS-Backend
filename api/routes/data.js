@@ -70,45 +70,75 @@ router.get("/", (req, res, next) => {
 
 router.post("/", upload.single('image'),(req, res, next)=>{
 
-    image_base64 = fs.createReadStream(req.file.path, {encoding: 'base64' })
+    if(req.body.classification === 'Blackout Related Object') {
 
-    fetch('https://mbj54a7j3k.execute-api.us-west-2.amazonaws.com/Prod/segmentation', {
+      console.log("Uploaded image related to classification - Blackout Related Object")
+
+      image_base64 = fs.createReadStream(req.file.path, {encoding: 'base64' })
+
+      fetch('https://mbj54a7j3k.execute-api.us-west-2.amazonaws.com/Prod/segmentation', {
         method: "POST", 
         body: image_base64
-      }).then((response) => response.json(), error => res.status(500).json({error:error}))
-        .then(prediction => {
+        }).then((response) => response.json(), error => res.status(500).json({error:error}))
+          .then(prediction => {
 
-        angle = prediction['predicted_label']
-        console.log('The obtained angle is ' + angle)
-        data = new Data({
-            _id: new mongoose.Types.ObjectId(),
-            latitude: req.body.latitude,
-            longitude: req.body.longitude,
-            compass: req.body.compass,
-            classification: req.body.classification,
-            image: req.file.path,
-            angle: angle
-        });
+          angle = prediction['predicted_label']
+          console.log('The obtained angle is ' + angle)
+          data = new Data({
+              _id: new mongoose.Types.ObjectId(),
+              latitude: req.body.latitude,
+              longitude: req.body.longitude,
+              compass: req.body.compass,
+              classification: req.body.classification,
+              image: req.file.path,
+              angle: angle
+          });
     
-        data
-        .save()
-        .then(result=>{
-            console.log(result);
-            res.status(201).json({
-                message: 'Added the image successfull with angle ' + angle
-            })
-        })
-        .catch(err => {
-            console.log(err);
-            res.status(500).json({
-                error: err
-            })
-        })
+          data
+          .save()
+          .then(result=>{
+              console.log(result);
+              res.status(201).json({
+                  message: 'Added the image successfull with angle ' + angle
+              })
+          })
+          .catch(err => {
+              console.log(err);
+              res.status(500).json({
+                  error: err
+              })
+          })
 
-      }, function(error){
-          res.status(500).json({error:error})
-      });
+        }, function(error){
+            res.status(500).json({error:error})
+        });
+      }else {
+     console.log("Uploaded image related to classification - Flood Related Object")
+     data = new Data({
+         _id: new mongoose.Types.ObjectId(),
+         latitude: req.body.latitude,
+         longitude: req.body.longitude,
+         compass: req.body.compass,
+         classification: req.body.classification,
+         image: req.file.path,
+         angle:0
+     });
 
+     data
+     .save()
+     .then(result=>{
+         console.log(result);
+         res.status(201).json({
+             message: 'Added the image successfull'
+         })
+     })
+     .catch(err => {
+         console.log(err);
+         res.status(500).json({
+             error: err
+         })
+     })
+     }
 });
 
 // router.post("/", upload.single('image'),(req, res, next)=>{
